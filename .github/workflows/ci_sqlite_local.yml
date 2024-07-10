@@ -1,0 +1,26 @@
+name: Database Migration for SQLite
+
+on: 
+  push:
+    branches:
+      - main
+    paths:
+        - database_migrations/sqlite_local/**
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install SQLite
+        run: sudo apt-get install -y sqlite3
+
+      - name: Install Flyway
+        run: |
+          wget -qO- https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline/8.5.12/flyway-commandline-8.5.12-linux-x64.tar.gz | tar xvz
+          sudo ln -s `pwd`/flyway-8.5.12/flyway /usr/local/bin
+
+      - name: Run Flyway Migrations
+        run: flyway -url=jdbc:sqlite:/Users/melih/Library/DBeaverData/workspace6/.metadata/sample-database-sqlite-1/Chinook.db -locations=filesystem:./migrations migrate
