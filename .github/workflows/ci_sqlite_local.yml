@@ -6,6 +6,7 @@ on:
       - main
     paths:
         - database_migrations/sqlite_local/**
+        - .github/workflows/ci_sqlite_local.yml
 
 jobs:
   build:
@@ -17,10 +18,14 @@ jobs:
       - name: Install SQLite
         run: sudo apt-get install -y sqlite3
 
+      - name: Setup environment variables
+        run: |
+          echo "FLYWAY_VERSION=10.15.2" >> $GITHUB_ENV
+
       - name: Install Flyway
         run: |
-          wget -qO- https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline/8.5.12/flyway-commandline-8.5.12-linux-x64.tar.gz | tar xvz
-          sudo ln -s `pwd`/flyway-8.5.12/flyway /usr/local/bin
+          curl -L "https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline/${{ env.FLYWAY_VERSION }}/flyway-commandline-${{ env.FLYWAY_VERSION }}-linux-x64.tar.gz" | tar xvz
+          sudo ln -s `pwd`/flyway-${{ env.FLYWAY_VERSION }}/flyway /usr/local/bin/flyway
 
       - name: Run Flyway Migrations
         run: flyway -url=jdbc:sqlite:/Users/melih/Library/DBeaverData/workspace6/.metadata/sample-database-sqlite-1/Chinook.db -locations=filesystem:./migrations migrate

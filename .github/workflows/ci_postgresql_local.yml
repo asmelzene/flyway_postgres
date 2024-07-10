@@ -6,6 +6,7 @@ on:
       - main
     paths:
         - database_migrations/postgresql_local/**
+        - .github/workflows/ci_postgresql_local.yml
 
 jobs:
   migrate:
@@ -19,9 +20,15 @@ jobs:
         with:
           distribution: 'adopt'
           java-version: '11'
+
+      - name: Setup environment variables
+        run: |
+          echo "FLYWAY_VERSION=10.15.2" >> $GITHUB_ENV
           
       - name: Install Flyway
-        run: sudo apt-get install -y flyway
+        run: |
+          curl -L "https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline/${{ env.FLYWAY_VERSION }}/flyway-commandline-${{ env.FLYWAY_VERSION }}-linux-x64.tar.gz" | tar xvz
+          sudo ln -s `pwd`/flyway-${{ env.FLYWAY_VERSION }}/flyway /usr/local/bin/flyway
       
       # DB_PASSWORD: ${{ secrets.DB2_PASSWORD }}
       - name: Run Flyway Migrations for postgresql_local_db
