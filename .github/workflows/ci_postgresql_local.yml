@@ -11,7 +11,8 @@ on:
 
 jobs:
   migrate:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
+    
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -25,15 +26,28 @@ jobs:
       - name: Setup environment variables
         run: |
           echo "FLYWAY_VERSION=10.15.2" >> $GITHUB_ENV
+          echo "DB_URL=jdbc:postgresql://localhost:5432/db_local_test" >> $GITHUB_ENV
+          echo "LOCATIONS=filesystem:./database_migrations/postgresql_local" >> $GITHUB_ENV
           
       - name: Install Flyway
         run: |
           curl -L "https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline/${{ env.FLYWAY_VERSION }}/flyway-commandline-${{ env.FLYWAY_VERSION }}-linux-x64.tar.gz" | tar xvz
           sudo ln -s `pwd`/flyway-${{ env.FLYWAY_VERSION }}/flyway /usr/local/bin/flyway
       
+      - name: Check PostgreSQL Status
+        run: |
+          # Attempt to connect to PostgreSQL and check the list of databases
+          psql -h localhost -p 5432 -U melih -c '\l' || { echo 'PostgreSQL is not reachable'; exit 1; }
+
+      - name: Run Flyway info
+        env:
+          DB_USER: melih
+          DB_PASSWORD: password
+        run: flyway -url=${DB_URL} -user=${DB_USER} -password=${DB_PASSWORD} -locations=${LOCATIONS} info
+
       # DB_PASSWORD: ${{ secrets.DB2_PASSWORD }}
       - name: Run Flyway Migrations for postgresql_local_db
         env:
           DB_USER: melih
           DB_PASSWORD: password
-        run: flyway -url=jdbc:postgresql://localhost:5432/db_local_test -user=${DB_USER} -password=${DB_PASSWORD} -locations=filesystem:./database_migrations/postgresql_local migrate
+        run: flyway -url=${DB_URL} -user=${DB_USER} -password=${DB_PASSWORD} -locations=${LOCATIONS} migrate
