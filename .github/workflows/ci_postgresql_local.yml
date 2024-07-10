@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - flyway*
     paths:
         - database_migrations/postgresql_local/**
         - .github/workflows/ci_postgresql_local.yml
